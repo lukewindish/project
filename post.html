@@ -1,0 +1,77 @@
+{% extends "layout.html" %}
+{%block content %}
+<article class="media content-section">
+  <img class="rounded-circle article-img" src="{{ url_for('static', filename='profile_pics/' + post.author.image_file) }}">
+<div class="media-body">
+  <div class="article-metadata">
+    <a class="mr-2" href="{{ url_for('user_posts', username=post.author.username) }}">{{ post.author.username }}</a>
+    <small class="text-muted">{{ post.date_posted.strftime('%Y-%m-%d') }}</small>
+    {% if post.author == current_user %}
+      <div class="">
+        <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('update_post', post_id=post.id) }}">Update</a>
+        <button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deleteModal">Delete</button>
+      </div>
+    {% endif %}
+  </div>
+  <h2 class="article-title">{{ post.title }}</h2>
+  <p class="article-content">{{ post.content }}</p>
+  <img class="img-thumbnail" src="{{ url_for('static', filename='post_pics/' + post.post_image) }}">
+  <hr>
+  <p class="article-content">Price: ${{ post.price }}</p>
+  <p class="article-content">Contact Info: {{ post.contact }}</p>
+  <script src="https://www.paypalobjects.com/api/checkout.js"></script>
+
+<div id="paypal-button"></div>
+
+<script style= "float:right;">
+  paypal.Button.render({
+    env: 'sandbox', // Or 'production'
+    // Set up the payment:
+    // 1. Add a payment callback
+    payment: function(data, actions) {
+      // 2. Make a request to your server
+      return actions.request.post('/my-api/create-payment/')
+        .then(function(res) {
+          // 3. Return res.id from the response
+          return res.id;
+        });
+    },
+    // Execute the payment:
+    // 1. Add an onAuthorize callback
+    onAuthorize: function(data, actions) {
+      // 2. Make a request to your server
+      return actions.request.post('/my-api/execute-payment/', {
+        paymentID: data.paymentID,
+        payerID:   data.payerID
+      })
+        .then(function(res) {
+          // 3. Show the buyer a confirmation message.
+        });
+    }
+  }, '#paypal-button');
+</script>
+
+</div>
+</article>
+
+
+<!-- Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteModalLabel">Are you sure you want to delete your post?</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <form class="" action='{{ url_for("delete_post", post_id=post.id) }}' method="post">
+          <input class="btn btn-danger" type="submit" value="Delete">
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}
